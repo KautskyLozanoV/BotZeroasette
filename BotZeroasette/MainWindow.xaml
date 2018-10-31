@@ -7,6 +7,11 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <TextBox x:Name="TextBox1" HorizontalAlignment="Left" Height="22" Margin="87,92,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="TextBox_TextChanged_1"/>
+        <Button Content="Button" HorizontalAlignment="Left" Margin="247,92,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
+        <TextBox x:Name="TextBox2" Height="23" Margin="87,141,471.6,0" TextWrapping="Wrap" Text="&#xD;&#xA;" VerticalAlignment="Top" TextChanged="TextBox_TextChanged" IsEnabled="False"/>
+        <Label Content="Località" HorizontalAlignment="Left" Margin="19,86,0,0" VerticalAlignment="Top" Width="63"/>
+        <Label Content="Risultato" HorizontalAlignment="Left" Margin="19,138,0,0" VerticalAlignment="Top"/>
+
     </Grid>
 </Window>
