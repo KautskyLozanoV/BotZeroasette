@@ -1,10 +1,12 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
 using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using OpenQA.Selenium.Support.UI;
+using OpenQA.Selenium.Interactions;
+using System.Threading;
 
 namespace BotZeroasette
 {
@@ -13,70 +15,52 @@ namespace BotZeroasette
     /// </summary>
     public partial class MainWindow : Window
     {
-        private IWebDriver _chromeDriver;
-        public IWebDriver ChromeDriver {
-            get {
-                if (_chromeDriver != null) return _chromeDriver;
-                // Location of the BotZeroasette.exe 
-                var currentExeDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
-                var options = new ChromeOptions
-                {
-                    BinaryLocation = Path.Combine(currentExeDirectory, "chromedriver.exe")
-                };
-                _chromeDriver = new ChromeDriver(options);
-
-                return _chromeDriver;
-            }
-        }
-
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-        }
-
-        private void TextBox_TextChanged_1(object sender, TextChangedEventArgs e)
-        {
-
-        }
-
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             var currentExeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var localita = TextBox1.Text;
 
-            var options = new ChromeOptions
-            {
-                BinaryLocation = Path.Combine(currentExeDirectory, "chromedriver.exe")
-            };
-            //options.SetLoggingPreference(LogType.Browser, LogLevel.Off);
-            options.AddArgument("--log-level=ALL");
             using (var chromeDriver = new ChromeDriver(currentExeDirectory))
             {
-                //Notice navigation is slightly different than the Java version
-                //This is because 'get' is a keyword in C#
-                chromeDriver.Navigate().GoToUrl("http://www.google.com/");
+                chromeDriver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
 
-                // Find the text input element by its name
-                IWebElement query = chromeDriver.FindElement(By.Name("q"));
+                var explicitWait = new WebDriverWait(chromeDriver, TimeSpan.FromSeconds(3));
 
-                // Enter something to search for
-                query.SendKeys("Cheese");
+                chromeDriver.Navigate().GoToUrl("https://www.ilmeteo.it/");
+                chromeDriver.Manage().Window.Maximize();
 
-                // Now submit the form. WebDriver will find the form for us from the element
-                query.Submit();
+                var searchElement = chromeDriver.FindElement(By.Id("search-main"));
+                searchElement.SendKeys(localita);
 
-                // Google's search is rendered dynamically with JavaScript.
-                // Wait for the page to load, timeout after 10 seconds
-                var wait = new WebDriverWait(chromeDriver, TimeSpan.FromSeconds(10));
-                wait.Until(d => d.Title.StartsWith("cheese", StringComparison.OrdinalIgnoreCase));
+                var options = explicitWait.Until(driver => driver.FindElement(By.Id("ajax_listOfOptions")));
 
-                // Should see: "Cheese - Google Search" (for an English locale)
-                Console.WriteLine("Page title is: " + chromeDriver.Title);
+                var firstOptionElement = explicitWait.Until(driver => options.FindElement(By.CssSelector("div:first-child > b:first-child")));
+                var l2 = firstOptionElement.Text;
+                firstOptionElement.Click();
+
+                var dayTabsElement = explicitWait.Until(driver => driver.FindElement(By.Id("daytabs")));
+                var tomorrowElementClickable = dayTabsElement.FindElement(By.CssSelector("li:nth-of-type(3) > a:first-child"));
+                var a = tomorrowElementClickable.FindElement(By.ClassName("tmax")).Text;
+                var b = tomorrowElementClickable.FindElement(By.ClassName("tmin")).Text;
+                tomorrowElementClickable.Click();
+                
+                var tomorrow = DateTime.Now.AddDays(1);
+                var elementName = $"#h13-{tomorrow.Day}";
+
+                var frame = chromeDriver.SwitchTo().Frame("frmprevi");
+                
+                var row13 = explicitWait.Until(driver => frame.FindElement(By.CssSelector(elementName)));
+                var c = row13.FindElement(By.CssSelector("td:nth-of-type(3)")).Text;
+                var d = row13.FindElement(By.CssSelector("td:nth-of-type(4)")).Text;
+                
+                var message = $"Domani {tomorrow.ToShortDateString()} alle ore 13:00, nella località di {l2} il tempo sarà {c} con una temperatura di {d}C. Durante la giornata di domani le temperature oscilleranno tra {b}C e {a}C.";
+
+                TextBox2.Text = message;
             }
         }
     }
